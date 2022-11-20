@@ -3,7 +3,7 @@ package streams
 // Consumer is the interface used by Stream.ForEach
 type Consumer[T any] interface {
 	// Accept is called by the user of teh consumer to supply a value
-	Accept(v T)
+	Accept(v T) error
 	// AndThen creates a new consumer from the current with a subsequent action to be performed
 	//
 	// multiple consumers can be chained together as one using this method
@@ -11,7 +11,7 @@ type Consumer[T any] interface {
 }
 
 // ConsumerFunc is the function signature used to create a new Consumer
-type ConsumerFunc[T any] func(v T)
+type ConsumerFunc[T any] func(v T) error
 
 // NewConsumer creates a new consumer from the function provided
 func NewConsumer[T any](f ConsumerFunc[T]) Consumer[T] {
@@ -27,15 +27,16 @@ type consumer[T any] struct {
 }
 
 // Accept is called by the user of teh consumer to supply a value
-func (c consumer[T]) Accept(v T) {
+func (c consumer[T]) Accept(v T) (err error) {
 	if c.f != nil {
-		c.f(v)
+		err = c.f(v)
 	} else {
-		c.inner.Accept(v)
+		err = c.inner.Accept(v)
 	}
-	if c.andThen != nil {
-		c.andThen.Accept(v)
+	if err == nil && c.andThen != nil {
+		err = c.andThen.Accept(v)
 	}
+	return
 }
 
 // AndThen creates a new consumer from the current with a subsequent action to be performed

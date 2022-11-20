@@ -20,8 +20,9 @@ type reducer[T any, R any] struct {
 // Reduce performs a reduction of the supplied Stream
 func (r reducer[T, R]) Reduce(s Stream[T]) R {
 	var result R
-	s.ForEach(NewConsumer[T](func(v T) {
+	_ = s.ForEach(NewConsumer[T](func(v T) error {
 		result = r.accumulator.Apply(v, result)
+		return nil
 	}))
 	return result
 }
