@@ -418,8 +418,8 @@ func TestStreamable_Unique(t *testing.T) {
 	require.Equal(t, 3, s3.Distinct().Len())
 	require.Equal(t, 3, s3.Unique(nil).Len())
 
-	s4 := Streamable[*instruct]([]*instruct{{1}, {1}, {2}, {3}, {3}})
-	require.Equal(t, 5, s4.Distinct().Len())
+	s4 := Streamable[*instruct]([]*instruct{{1}, {1}, {2}, {3}, {3}, {1}})
+	require.Equal(t, 6, s4.Distinct().Len())
 	s5 := s4.Unique(NewComparator(func(v1, v2 *instruct) int {
 		if v1.value < v2.value {
 			return -1

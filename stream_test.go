@@ -384,8 +384,8 @@ func TestStream_Unique(t *testing.T) {
 	require.Equal(t, 3, s2.Distinct().Len())
 	require.Equal(t, 3, s2.Unique(nil).Len())
 
-	s3 := Of(&instruct{1}, &instruct{1}, &instruct{2}, &instruct{3}, &instruct{3})
-	require.Equal(t, 5, s3.Distinct().Len())
+	s3 := Of(&instruct{1}, &instruct{1}, &instruct{2}, &instruct{3}, &instruct{3}, &instruct{1})
+	require.Equal(t, 6, s3.Distinct().Len())
 	s3 = s3.Unique(NewComparator(func(v1, v2 *instruct) int {
 		if v1.value < v2.value {
 			return -1

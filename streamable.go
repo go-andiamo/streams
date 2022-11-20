@@ -259,15 +259,15 @@ func (s Streamable[T]) Unique(c Comparator[T]) Stream[T] {
 	if isDistinctable(vt) {
 		return s.Distinct()
 	} else if c != nil {
+		prevs := make(map[int]bool, len(s))
 		for i, v := range s {
-			add := true
-			for j := i + 1; j < len(s); j++ {
-				if c.Compare(v, s[j]) == 0 {
-					add = false
-					break
+			if !prevs[i] {
+				for j := i + 1; j < len(s); j++ {
+					if !prevs[j] && c.Compare(v, s[j]) == 0 {
+						prevs[j] = true
+					}
 				}
-			}
-			if add {
+				prevs[i] = true
 				r.elements = append(r.elements, v)
 			}
 		}
