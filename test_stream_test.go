@@ -44,8 +44,9 @@ func (s *testStream[T]) Concat(add Stream[T]) Stream[T] {
 	} else if sas, ok := add.(Streamable[T]); ok {
 		r.elements = append(r.elements, sas...)
 	} else {
-		add.ForEach(NewConsumer(func(v T) {
+		_ = add.ForEach(NewConsumer(func(v T) error {
 			r.elements = append(r.elements, v)
+			return nil
 		}))
 	}
 	return r
@@ -102,12 +103,15 @@ func (s *testStream[T]) FirstMatch(p Predicate[T]) gopt.Optional[T] {
 	return gopt.Empty[T]()
 }
 
-func (s *testStream[T]) ForEach(c Consumer[T]) {
+func (s *testStream[T]) ForEach(c Consumer[T]) error {
 	if c != nil {
 		for _, v := range s.elements {
-			c.Accept(v)
+			if err := c.Accept(v); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func (s *testStream[T]) Has(v T, c Comparator[T]) bool {

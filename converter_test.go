@@ -6,9 +6,10 @@ import (
 )
 
 func TestConverter(t *testing.T) {
-	c := NewConverter[string, outStruct](func(v string) outStruct {
-		return outStruct{value: v}
+	c := NewConverter[string, outStruct](func(v string) (outStruct, error) {
+		return outStruct{value: v}, nil
 	})
-	out := c.Convert("a")
+	out, err := c.Convert("a")
+	require.NoError(t, err)
 	require.Equal(t, "a", out.value)
 }

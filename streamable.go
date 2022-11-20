@@ -48,8 +48,9 @@ func (s Streamable[T]) Concat(add Stream[T]) Stream[T] {
 	} else if sas, ok := add.(Streamable[T]); ok {
 		r.elements = append(r.elements, sas...)
 	} else {
-		add.ForEach(NewConsumer(func(v T) {
+		_ = add.ForEach(NewConsumer(func(v T) error {
 			r.elements = append(r.elements, v)
+			return nil
 		}))
 	}
 	return r
@@ -126,12 +127,15 @@ func (s Streamable[T]) FirstMatch(p Predicate[T]) gopt.Optional[T] {
 // the action to be performed is defined by the provided consumer
 //
 // if the provided consumer is nil, nothing is performed
-func (s Streamable[T]) ForEach(c Consumer[T]) {
+func (s Streamable[T]) ForEach(c Consumer[T]) error {
 	if c != nil {
 		for _, v := range s {
-			c.Accept(v)
+			if err := c.Accept(v); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 // Has returns whether this stream contains an element that is equal to the element value provided

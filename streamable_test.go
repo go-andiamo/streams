@@ -1,6 +1,7 @@
 package streams
 
 import (
+	"errors"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -159,14 +160,24 @@ func TestStreamable_ForEach(t *testing.T) {
 	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
 	s := Streamable[string](sl)
 	s2 := make([]string, 0)
-	c := NewConsumer(func(v string) {
+	c := NewConsumer(func(v string) error {
 		s2 = append(s2, v)
+		return nil
 	})
 	require.Equal(t, 0, len(s2))
-	s.ForEach(c)
+	err := s.ForEach(c)
+	require.NoError(t, err)
 	require.Equal(t, 10, len(s2))
 
-	s.ForEach(nil)
+	err = s.ForEach(nil)
+	require.NoError(t, err)
+
+	c = NewConsumer(func(v string) error {
+		return errors.New("whoops")
+	})
+	err = s.ForEach(c)
+	require.Error(t, err)
+	require.Equal(t, "whoops", err.Error())
 }
 
 func TestStreamable_Has(t *testing.T) {
