@@ -64,9 +64,9 @@ func (s *testStream[T]) Count(p Predicate[T]) int {
 	return c
 }
 
-func (s *testStream[T]) Difference(with Stream[T], c Comparator[T]) Stream[T] {
+func (s *testStream[T]) Difference(other Stream[T], c Comparator[T]) Stream[T] {
 	p := NewPredicate[T](func(v T) bool {
-		return !with.Has(v, c)
+		return !other.Has(v, c)
 	})
 	return s.Filter(p)
 }
@@ -121,9 +121,9 @@ func (s *testStream[T]) Has(v T, c Comparator[T]) bool {
 	return false
 }
 
-func (s *testStream[T]) Intersection(with Stream[T], c Comparator[T]) Stream[T] {
+func (s *testStream[T]) Intersection(other Stream[T], c Comparator[T]) Stream[T] {
 	p := NewPredicate[T](func(v T) bool {
-		return with.Has(v, c)
+		return other.Has(v, c)
 	})
 	return s.Filter(p)
 }
@@ -237,20 +237,20 @@ func (s *testStream[T]) Sorted(c Comparator[T]) Stream[T] {
 	return r
 }
 
-func (s *testStream[T]) SymmetricDifference(with Stream[T], c Comparator[T]) Stream[T] {
-	i := s.Intersection(with, c)
+func (s *testStream[T]) SymmetricDifference(other Stream[T], c Comparator[T]) Stream[T] {
+	i := s.Intersection(other, c)
 	p := NewPredicate[T](func(v T) bool {
 		return !i.Has(v, c)
 	})
-	return s.Filter(p).Concat(with.Filter(p))
+	return s.Filter(p).Concat(other.Filter(p))
 }
 
-func (s *testStream[T]) Union(with Stream[T], c Comparator[T]) Stream[T] {
-	i := s.Intersection(with, c)
+func (s *testStream[T]) Union(other Stream[T], c Comparator[T]) Stream[T] {
+	i := s.Intersection(other, c)
 	p := NewPredicate[T](func(v T) bool {
 		return !i.Has(v, c)
 	})
-	return s.Concat(with.Filter(p))
+	return s.Concat(other.Filter(p))
 }
 
 func (s *testStream[T]) Unique(c Comparator[T]) Stream[T] {

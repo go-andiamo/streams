@@ -23,18 +23,6 @@ func TestStreamable(t *testing.T) {
 	require.Equal(t, 5, len(sl))
 }
 
-func TestStreamableOf(t *testing.T) {
-	sl := []string{"a", "b", "c", "d"}
-	s := StreamableOf(sl)
-	require.Equal(t, 4, s.Len())
-	require.Equal(t, 4, len(sl))
-
-	// stream is immutable
-	sl = append(sl, "e")
-	require.Equal(t, 4, s.Len())
-	require.Equal(t, 5, len(sl))
-}
-
 func TestStreamable_AllMatch(t *testing.T) {
 	sl := []string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
 	s := Streamable[string](sl)
