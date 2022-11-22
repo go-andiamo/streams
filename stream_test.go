@@ -16,6 +16,14 @@ func TestOf(t *testing.T) {
 	require.Equal(t, 3, s.Len())
 }
 
+func TestOfSlice(t *testing.T) {
+	sl := []string{"a", "b", "c", "d"}
+	s := OfSlice(sl)
+	require.Equal(t, 4, s.Len())
+	sl = append(sl, "e")
+	require.Equal(t, 4, s.Len())
+}
+
 func TestStream_AllMatch(t *testing.T) {
 	s := Of("D", "j", "F", "g", "H", "i", "E", "a", "B", "c")
 	p := NewPredicate(func(v string) bool {
@@ -47,6 +55,12 @@ func TestStream_AnyMatch(t *testing.T) {
 	require.False(t, m)
 }
 
+func TestStream_Append(t *testing.T) {
+	s := Of("a", "b", "c")
+	s2 := s.Append("d", "e", "f")
+	require.Equal(t, 6, s2.Len())
+}
+
 func TestStream_Concat(t *testing.T) {
 	s := Of("a", "b", "c")
 	add := Of("d", "e", "f")
@@ -58,11 +72,15 @@ func TestStream_Concat(t *testing.T) {
 	s3 := s2.Concat(add2)
 	require.Equal(t, 9, s3.Len())
 
+	add3 := NewStreamableSlice(&[]string{"j", "k", "l"})
+	s4 := s.Concat(add3)
+	require.Equal(t, 6, s4.Len())
+
 	ts := &testStream[string]{
 		elements: []string{"j", "k", "l"},
 	}
-	s4 := s3.Concat(ts)
-	require.Equal(t, 12, s4.Len())
+	s5 := s3.Concat(ts)
+	require.Equal(t, 12, s5.Len())
 }
 
 func TestStream_Count(t *testing.T) {
@@ -297,9 +315,36 @@ func TestStream_NthMatch(t *testing.T) {
 	v, _ = o.GetOk()
 	require.Equal(t, "B", v)
 
+	o = s.NthMatch(nil, 10)
+	require.True(t, o.IsPresent())
+	v, _ = o.GetOk()
+	require.Equal(t, "c", v)
+	o = s.NthMatch(nil, 11)
+	require.False(t, o.IsPresent())
+	o = s.NthMatch(nil, -10)
+	v, _ = o.GetOk()
+	require.Equal(t, "d", v)
+	require.True(t, o.IsPresent())
+	o = s.NthMatch(nil, -11)
+	require.False(t, o.IsPresent())
+
 	s = Of("a", "b", "c")
 	o = s.NthMatch(p, 1)
 	require.False(t, o.IsPresent())
+}
+
+func TestStream_Reverse(t *testing.T) {
+	s := Of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
+	s2 := s.Reverse()
+	require.Equal(t, 10, s2.Len())
+	o := s2.NthMatch(nil, 1)
+	require.True(t, o.IsPresent())
+	v, _ := o.GetOk()
+	require.Equal(t, "10", v)
+	o = s2.NthMatch(nil, 10)
+	require.True(t, o.IsPresent())
+	v, _ = o.GetOk()
+	require.Equal(t, "1", v)
 }
 
 func TestStream_Skip(t *testing.T) {
@@ -309,6 +354,9 @@ func TestStream_Skip(t *testing.T) {
 
 	s2 = s.Skip(10)
 	require.Equal(t, 0, s2.Len())
+
+	s2 = s.Skip(-1)
+	require.Equal(t, 10, s2.Len())
 }
 
 func TestStream_SkipAndLimit(t *testing.T) {
@@ -317,6 +365,40 @@ func TestStream_SkipAndLimit(t *testing.T) {
 	require.Equal(t, 5, s2.Len())
 	s2 = s.Skip(5).Limit(2)
 	require.Equal(t, 2, s2.Len())
+}
+
+func TestStream_Slice(t *testing.T) {
+	s := Of("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+	s2 := s.Slice(5, 3)
+	require.Equal(t, 3, s2.Len())
+	o := s2.NthMatch(nil, 1)
+	require.True(t, o.IsPresent())
+	v, _ := o.GetOk()
+	require.Equal(t, "5", v)
+	o = s2.NthMatch(nil, -1)
+	require.True(t, o.IsPresent())
+	v, _ = o.GetOk()
+	require.Equal(t, "7", v)
+
+	s2 = s.Slice(5, -3)
+	require.Equal(t, 3, s2.Len())
+	o = s2.NthMatch(nil, 1)
+	require.True(t, o.IsPresent())
+	v, _ = o.GetOk()
+	require.Equal(t, "2", v)
+	o = s2.NthMatch(nil, -1)
+	require.True(t, o.IsPresent())
+	v, _ = o.GetOk()
+	require.Equal(t, "4", v)
+
+	s2 = s.Slice(-10, -3)
+	require.Equal(t, 0, s2.Len())
+
+	s2 = s.Slice(20, -10)
+	require.Equal(t, 0, s2.Len())
+
+	s2 = s.Slice(10, -10)
+	require.Equal(t, 10, s2.Len())
 }
 
 func TestStream_Sorted(t *testing.T) {

@@ -1,6 +1,9 @@
 package streams
 
-import "strings"
+import (
+	"reflect"
+	"strings"
+)
 
 var (
 	StringComparator            = _StringComparator            // StringComparator is a pre-made comparator for comparing strings
@@ -123,3 +126,28 @@ var (
 		return 0
 	})
 )
+
+func absInt(n int) int {
+	if n < 0 {
+		return 0 - n
+	}
+	return n
+}
+
+func absZero(n int) int {
+	if n < 0 {
+		return 0
+	}
+	return n
+}
+
+func isDistinctable(v any) bool {
+	switch v.(type) {
+	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, bool, float32, float64:
+		return true
+	}
+	if reflect.TypeOf(v).Kind() != reflect.Ptr {
+		return true
+	}
+	return false
+}

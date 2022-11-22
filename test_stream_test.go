@@ -5,8 +5,10 @@ import (
 	"sort"
 )
 
+// check that testStream implements Stream
 var myTestStream Stream[any] = &testStream[any]{}
 
+// testStream is a duplicate of stream - but is used to test that Concat can use interface
 type testStream[T any] struct {
 	elements []T
 }
@@ -32,6 +34,12 @@ func (s *testStream[T]) AnyMatch(p Predicate[T]) bool {
 		}
 	}
 	return false
+}
+
+func (s *testStream[T]) Append(items ...T) Stream[T] {
+	return &stream[T]{
+		elements: append(s.elements, items...),
+	}
 }
 
 func (s *testStream[T]) Concat(add Stream[T]) Stream[T] {
@@ -193,11 +201,19 @@ func (s *testStream[T]) NoneMatch(p Predicate[T]) bool {
 }
 
 func (s *testStream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
+	absn := absInt(nth)
+	if absn > len(s.elements) {
+		return gopt.Empty[T]()
+	}
 	c := 0
-	if nth < 0 {
-		nth = 0 - nth
+	if p == nil && nth < 0 {
+		return gopt.Of[T](s.elements[len(s.elements)-absn])
+	} else if p == nil && nth > 0 {
+		return gopt.Of[T](s.elements[nth-1])
+	} else if nth < 0 {
+		nth = absn
 		for i := len(s.elements) - 1; i >= 0; i-- {
-			if p == nil || p.Test(s.elements[i]) {
+			if p.Test(s.elements[i]) {
 				c++
 				if c == nth {
 					return gopt.Of[T](s.elements[i])
@@ -206,7 +222,7 @@ func (s *testStream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
 		}
 	} else if nth > 0 {
 		for _, v := range s.elements {
-			if p == nil || p.Test(v) {
+			if p.Test(v) {
 				c++
 				if c == nth {
 					return gopt.Of[T](v)
@@ -215,6 +231,34 @@ func (s *testStream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
 		}
 	}
 	return gopt.Empty[T]()
+}
+
+func (s *testStream[T]) Reverse() Stream[T] {
+	l := len(s.elements)
+	r := &stream[T]{
+		elements: make([]T, l),
+	}
+	for i := 0; i < l; i++ {
+		r.elements[i] = s.elements[l-i-1]
+	}
+	return r
+}
+
+func (s *testStream[T]) Slice(start int, count int) Stream[T] {
+	start = absZero(start)
+	end := start + count
+	if count < 0 {
+		start, end = end, start
+	}
+	if start < 0 {
+		start = 0
+	}
+	if end > len(s.elements) {
+		end = len(s.elements)
+	}
+	return &stream[T]{
+		elements: s.elements[start:end],
+	}
 }
 
 func (s *testStream[T]) Skip(n int) Stream[T] {

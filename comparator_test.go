@@ -109,16 +109,16 @@ func TestComparator_NotEqual(t *testing.T) {
 	require.False(t, c.NotEqual("b", "a"))
 }
 
-type comparable struct {
+type testComparable struct {
 	primary   string
 	secondary int
 }
 
 func TestComparator_Then(t *testing.T) {
-	c := NewComparator[comparable](func(v1, v2 comparable) int {
+	c := NewComparator[testComparable](func(v1, v2 testComparable) int {
 		return strings.Compare(v1.primary, v2.primary)
 	})
-	csub := NewComparator[comparable](func(v1, v2 comparable) int {
+	csub := NewComparator[testComparable](func(v1, v2 testComparable) int {
 		if v1.secondary < v2.secondary {
 			return -1
 		} else if v1.secondary > v2.secondary {
@@ -128,13 +128,13 @@ func TestComparator_Then(t *testing.T) {
 	})
 	ct := c.Then(csub)
 
-	a0 := comparable{primary: "a", secondary: 0}
-	a1 := comparable{primary: "a", secondary: 1}
-	b0 := comparable{primary: "b", secondary: 0}
-	b1 := comparable{primary: "b", secondary: 1}
+	a0 := testComparable{primary: "a", secondary: 0}
+	a1 := testComparable{primary: "a", secondary: 1}
+	b0 := testComparable{primary: "b", secondary: 0}
+	b1 := testComparable{primary: "b", secondary: 1}
 	testCases := []struct {
-		first  comparable
-		second comparable
+		first  testComparable
+		second testComparable
 		expect int
 	}{
 		{

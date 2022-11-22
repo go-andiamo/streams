@@ -2,7 +2,7 @@ package streams
 
 // Comparator is the interface used to compare elements of a Stream
 //
-// This interface is ued when sorting, when finding min/max of a stream
+// This interface is used when sorting, when finding min/max of a stream
 // and is also used to determine equality during set operations
 // (Stream.Difference, Stream.Intersection, Stream.SymmetricDifference and Stream.Union)
 type Comparator[T any] interface {
