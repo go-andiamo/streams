@@ -7,54 +7,36 @@ import (
 	"testing"
 )
 
-// ensure Streamable implements Stream
-var streamable Stream[any] = Streamable[any]{}
+func TestStreamableSlice(t *testing.T) {
+	sl := &[]string{"a", "b", "c"}
+	s := NewStreamableSlice(sl)
+	require.Equal(t, 3, len(*sl))
+	require.Equal(t, 3, s.Len())
 
-func TestStreamable(t *testing.T) {
-	sl := []string{"a", "b", "c", "d"}
-	s := Streamable[string](sl)
+	*sl = append(*sl, "d")
+	require.Equal(t, 4, len(*sl))
 	require.Equal(t, 4, s.Len())
-	require.Equal(t, 4, len(s))
-	require.Equal(t, 4, len(sl))
-
-	// stream is immutable
-	sl = append(sl, "e")
-	require.Equal(t, 4, s.Len())
-	require.Equal(t, 4, len(s))
-	require.Equal(t, 5, len(sl))
-
-	sl = []string{"a", "b", "c", "d"}
-	s = sl[:]
-	require.Equal(t, 4, s.Len())
-	require.Equal(t, 4, len(s))
-	require.Equal(t, 4, len(sl))
-	sl = append(sl, "e")
-	require.Equal(t, 4, s.Len())
-	require.Equal(t, 4, len(s))
-	require.Equal(t, 5, len(sl))
 }
 
-func TestStreamable_AllMatch(t *testing.T) {
-	sl := []string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_AllMatch(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	})
 	m := s.AllMatch(p)
 	require.False(t, m)
-	s = []string{"A", "B", "C"}
+	s = NewStreamableSlice(&[]string{"A", "B", "C"})
 	m = s.AllMatch(p)
 	require.True(t, m)
 	m = s.AllMatch(nil)
 	require.False(t, m)
-	s = []string{}
+	s = NewStreamableSlice(&[]string{})
 	m = s.AllMatch(p)
 	require.False(t, m)
 }
 
-func TestStreamable_AnyMatch(t *testing.T) {
-	sl := []string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_AnyMatch(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	})
@@ -62,21 +44,19 @@ func TestStreamable_AnyMatch(t *testing.T) {
 	require.True(t, m)
 	m = s.AnyMatch(nil)
 	require.False(t, m)
-	s = []string{"a", "b", "c"}
+	s = NewStreamableSlice(&[]string{"a", "b", "c"})
 	m = s.AnyMatch(p)
 	require.False(t, m)
 }
 
-func TestStreamable_Append(t *testing.T) {
-	sl := []string{"a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Append(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"a", "b", "c"})
 	s2 := s.Append("d", "e", "f")
 	require.Equal(t, 6, s2.Len())
 }
 
-func TestStreamable_Concat(t *testing.T) {
-	sl := []string{"a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Concat(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"a", "b", "c"})
 
 	add := Of("d", "e", "f")
 	s2 := s.Concat(add)
@@ -98,9 +78,8 @@ func TestStreamable_Concat(t *testing.T) {
 	require.Equal(t, 6, s2.Len())
 }
 
-func TestStreamable_Count(t *testing.T) {
-	sl := []string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Count(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	}).Or(NewPredicate(func(v string) bool {
@@ -113,8 +92,8 @@ func TestStreamable_Count(t *testing.T) {
 	require.Equal(t, 10, c)
 }
 
-func TestStreamable_Difference(t *testing.T) {
-	s1 := Streamable[string]([]string{"a", "b", "c"})
+func TestStreamableSlice_Difference(t *testing.T) {
+	s1 := NewStreamableSlice(&[]string{"a", "b", "c"})
 	s2 := Of("b", "c", "d")
 	s := s1.Difference(s2, StringComparator)
 	require.Equal(t, 1, s.Len())
@@ -131,20 +110,18 @@ func TestStreamable_Difference(t *testing.T) {
 	require.Equal(t, "d", v)
 }
 
-func TestStreamable_Distinct(t *testing.T) {
-	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Distinct(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
 	s2 := s.Distinct()
 	require.Equal(t, 10, s2.Len())
 
-	s = []string{"d", "d", "d", "b", "b", "b", "c", "c", "c", "a"}
+	s = NewStreamableSlice(&[]string{"d", "d", "d", "b", "b", "b", "c", "c", "c", "a"})
 	s2 = s.Distinct()
 	require.Equal(t, 4, s2.Len())
 }
 
-func TestStreamable_Filter(t *testing.T) {
-	sl := []string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Filter(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	}).Or(NewPredicate(func(v string) bool {
@@ -161,9 +138,8 @@ func TestStreamable_Filter(t *testing.T) {
 	require.Equal(t, 4, s2.Len())
 }
 
-func TestStreamable_FirstMatch(t *testing.T) {
-	sl := []string{"d", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_FirstMatch(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	})
@@ -172,14 +148,13 @@ func TestStreamable_FirstMatch(t *testing.T) {
 	v, _ := o.GetOk()
 	require.Equal(t, "F", v)
 
-	s = []string{"a", "b", "c"}
+	s = NewStreamableSlice(&[]string{"a", "b", "c"})
 	o = s.FirstMatch(p)
 	require.False(t, o.IsPresent())
 }
 
-func TestStreamable_ForEach(t *testing.T) {
-	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_ForEach(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
 	s2 := make([]string, 0)
 	c := NewConsumer(func(v string) error {
 		s2 = append(s2, v)
@@ -201,9 +176,8 @@ func TestStreamable_ForEach(t *testing.T) {
 	require.Equal(t, "whoops", err.Error())
 }
 
-func TestStreamable_Has(t *testing.T) {
-	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Has(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
 	h := s.Has("a", StringComparator)
 	require.True(t, h)
 	h = s.Has("A", StringInsensitiveComparator)
@@ -212,9 +186,9 @@ func TestStreamable_Has(t *testing.T) {
 	require.False(t, h)
 }
 
-func TestStreamable_Intersection(t *testing.T) {
-	s1 := Streamable[string]([]string{"a", "b", "c"})
-	s2 := Streamable[string]([]string{"b", "c", "d"})
+func TestStreamableSlice_Intersection(t *testing.T) {
+	s1 := NewStreamableSlice(&[]string{"a", "b", "c"})
+	s2 := NewStreamableSlice(&[]string{"b", "c", "d"})
 	s := s1.Intersection(s2, StringComparator)
 	require.Equal(t, 2, s.Len())
 	o := s.NthMatch(nil, 1)
@@ -227,9 +201,8 @@ func TestStreamable_Intersection(t *testing.T) {
 	require.Equal(t, "c", v)
 }
 
-func TestStreamable_LastMatch(t *testing.T) {
-	sl := []string{"d", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_LastMatch(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	})
@@ -243,14 +216,13 @@ func TestStreamable_LastMatch(t *testing.T) {
 	v, _ = o.GetOk()
 	require.Equal(t, "c", v)
 
-	s = []string{"a", "b", "c"}
+	s = NewStreamableSlice(&[]string{"a", "b", "c"})
 	o = s.LastMatch(p)
 	require.False(t, o.IsPresent())
 }
 
-func TestStreamable_Limit(t *testing.T) {
-	sl := []string{"a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Limit(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"a", "b", "c"})
 	s2 := s.Limit(5)
 	require.Equal(t, 3, s2.Len())
 
@@ -258,9 +230,8 @@ func TestStreamable_Limit(t *testing.T) {
 	require.Equal(t, 1, s2.Len())
 }
 
-func TestStreamable_Max(t *testing.T) {
-	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Max(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
 	c := NewComparator(func(v1, v2 string) int {
 		return strings.Compare(v1, v2)
 	})
@@ -272,14 +243,13 @@ func TestStreamable_Max(t *testing.T) {
 	o = s.Max(nil)
 	require.False(t, o.IsPresent())
 
-	s = []string{}
+	s = NewStreamableSlice(&[]string{})
 	o = s.Max(c)
 	require.False(t, o.IsPresent())
 }
 
-func TestStreamable_Min(t *testing.T) {
-	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Min(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
 	c := NewComparator(func(v1, v2 string) int {
 		return strings.Compare(v1, v2)
 	})
@@ -291,14 +261,13 @@ func TestStreamable_Min(t *testing.T) {
 	o = s.Min(nil)
 	require.False(t, o.IsPresent())
 
-	s = []string{}
+	s = NewStreamableSlice(&[]string{})
 	o = s.Min(c)
 	require.False(t, o.IsPresent())
 }
 
-func TestStreamable_NoneMatch(t *testing.T) {
-	sl := []string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_NoneMatch(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"D", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	})
@@ -306,14 +275,13 @@ func TestStreamable_NoneMatch(t *testing.T) {
 	require.False(t, m)
 	m = s.NoneMatch(nil)
 	require.True(t, m)
-	s = []string{"a", "b", "c"}
+	s = NewStreamableSlice(&[]string{"a", "b", "c"})
 	m = s.NoneMatch(p)
 	require.True(t, m)
 }
 
-func TestStreamable_NthMatch(t *testing.T) {
-	sl := []string{"d", "j", "F", "g", "H", "i", "E", "a", "B", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_NthMatch(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "F", "g", "H", "i", "E", "a", "B", "c"})
 	p := NewPredicate(func(v string) bool {
 		return strings.ToUpper(v) == v
 	})
@@ -350,14 +318,13 @@ func TestStreamable_NthMatch(t *testing.T) {
 	o = s.NthMatch(nil, -11)
 	require.False(t, o.IsPresent())
 
-	s = []string{"a", "b", "c"}
+	s = NewStreamableSlice(&[]string{"a", "b", "c"})
 	o = s.NthMatch(p, 1)
 	require.False(t, o.IsPresent())
 }
 
-func TestStreamable_Reverse(t *testing.T) {
-	sl := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Reverse(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"})
 	s2 := s.Reverse()
 	require.Equal(t, 10, s2.Len())
 	o := s2.NthMatch(nil, 1)
@@ -370,9 +337,8 @@ func TestStreamable_Reverse(t *testing.T) {
 	require.Equal(t, "1", v)
 }
 
-func TestStreamable_Skip(t *testing.T) {
-	sl := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Skip(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"})
 	s2 := s.Skip(5)
 	require.Equal(t, 5, s2.Len())
 
@@ -383,18 +349,16 @@ func TestStreamable_Skip(t *testing.T) {
 	require.Equal(t, 10, s2.Len())
 }
 
-func TestStreamable_SkipAndLimit(t *testing.T) {
-	sl := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_SkipAndLimit(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"})
 	s2 := s.Skip(5).Limit(10)
 	require.Equal(t, 5, s2.Len())
 	s2 = s.Skip(5).Limit(2)
 	require.Equal(t, 2, s2.Len())
 }
 
-func TestStreamable_Slice(t *testing.T) {
-	sl := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Slice(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"})
 	s2 := s.Slice(5, 3)
 	require.Equal(t, 3, s2.Len())
 	o := s2.NthMatch(nil, 1)
@@ -427,9 +391,8 @@ func TestStreamable_Slice(t *testing.T) {
 	require.Equal(t, 10, s2.Len())
 }
 
-func TestStreamable_Sorted(t *testing.T) {
-	sl := []string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"}
-	s := Streamable[string](sl)
+func TestStreamableSlice_Sorted(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
 	c := NewComparator(func(v1, v2 string) int {
 		return strings.Compare(v1, v2)
 	})
@@ -446,9 +409,9 @@ func TestStreamable_Sorted(t *testing.T) {
 	require.Equal(t, "d", rs2.elements[0])
 }
 
-func TestStreamable_SymmetricDifference(t *testing.T) {
-	s1 := Streamable[string]([]string{"a", "b", "c"})
-	s2 := Streamable[string]([]string{"b", "c", "d"})
+func TestStreamableSlice_SymmetricDifference(t *testing.T) {
+	s1 := NewStreamableSlice(&[]string{"a", "b", "c"})
+	s2 := NewStreamableSlice(&[]string{"b", "c", "d"})
 	s := s1.SymmetricDifference(s2, StringComparator)
 	require.Equal(t, 2, s.Len())
 	o := s.NthMatch(nil, 1)
@@ -472,9 +435,9 @@ func TestStreamable_SymmetricDifference(t *testing.T) {
 	require.Equal(t, "a", v)
 }
 
-func TestStreamable_Union(t *testing.T) {
-	s1 := Streamable[string]([]string{"a", "b", "c"})
-	s2 := Streamable[string]([]string{"b", "c", "d"})
+func TestStreamableSlice_Union(t *testing.T) {
+	s1 := NewStreamableSlice(&[]string{"a", "b", "c"})
+	s2 := NewStreamableSlice(&[]string{"b", "c", "d"})
 	s := s1.Union(s2, StringComparator)
 	require.Equal(t, 4, s.Len())
 	o := s.NthMatch(nil, 1)
@@ -495,16 +458,16 @@ func TestStreamable_Union(t *testing.T) {
 	require.Equal(t, "d", v)
 }
 
-func TestStreamable_Unique(t *testing.T) {
-	s := Streamable[string]([]string{"a", "a", "b", "c", "c"})
+func TestStreamableSlice_Unique(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"a", "a", "b", "c", "c"})
 	s2 := s.Unique(StringComparator)
 	require.Equal(t, 3, s2.Len())
 
-	s3 := Streamable[instruct]([]instruct{{1}, {1}, {2}, {3}, {3}})
+	s3 := NewStreamableSlice(&[]instruct{{1}, {1}, {2}, {3}, {3}})
 	require.Equal(t, 3, s3.Distinct().Len())
 	require.Equal(t, 3, s3.Unique(nil).Len())
 
-	s4 := Streamable[*instruct]([]*instruct{{1}, {1}, {2}, {3}, {3}, {1}})
+	s4 := NewStreamableSlice(&[]*instruct{{1}, {1}, {2}, {3}, {3}, {1}})
 	require.Equal(t, 6, s4.Distinct().Len())
 	s5 := s4.Unique(NewComparator(func(v1, v2 *instruct) int {
 		if v1.value < v2.value {

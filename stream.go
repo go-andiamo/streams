@@ -2,10 +2,10 @@ package streams
 
 import (
 	"github.com/go-andiamo/gopt"
-	"reflect"
 	"sort"
 )
 
+// Stream is the main interface for all streams
 type Stream[T any] interface {
 	// AllMatch returns whether all elements of this stream match the provided predicate
 	//
@@ -15,6 +15,8 @@ type Stream[T any] interface {
 	//
 	// if the provided predicate is nil or the stream is empty, always returns false
 	AnyMatch(p Predicate[T]) bool
+	// Append creates a new stream with all the elements of this stream followed by the specified elements
+	Append(items ...T) Stream[T]
 	// Concat creates a new stream with all the elements of this stream followed by all the elements of the added stream
 	Concat(add Stream[T]) Stream[T]
 	// Count returns the count of elements that match the provided predicate
@@ -85,11 +87,20 @@ type Stream[T any] interface {
 	//
 	// if no elements match in the specified position, an empty (not present) optional is returned
 	NthMatch(p Predicate[T], nth int) gopt.Optional[T]
+	// Reverse creates a new stream composed of elements from this stream but in reverse order
+	Reverse() Stream[T]
 	// Skip creates a new stream consisting of this stream after discarding the first n elements
 	//
 	// if the specified n to skip is equal to or greater than the number of elements in this stream,
 	// an empty stream is returned
 	Skip(n int) Stream[T]
+	// Slice creates a new stream composed of elements from this stream starting at the specified start and including
+	// the specified count (or to the end)
+	//
+	// the start is zero based (and less than zero is ignored)
+	//
+	// if the specified count is negative, items are selected from the start and then backwards by the count
+	Slice(start int, count int) Stream[T]
 	// Sorted creates a new stream consisting of the elements of this stream, sorted according to the provided comparator
 	//
 	// if the provided comparator is nil, the elements are not sorted
@@ -118,6 +129,16 @@ type Stream[T any] interface {
 func Of[T any](values ...T) Stream[T] {
 	return &stream[T]{
 		elements: values,
+	}
+}
+
+// OfSlice creates a new stream around a slice
+//
+//
+// Note: Once created, If the slice changes the stream does not
+func OfSlice[T any](s []T) Stream[T] {
+	return &stream[T]{
+		elements: s,
 	}
 }
 
@@ -154,6 +175,13 @@ func (s *stream[T]) AnyMatch(p Predicate[T]) bool {
 	return false
 }
 
+// Append creates a new stream with all the elements of this stream followed by the specified elements
+func (s *stream[T]) Append(items ...T) Stream[T] {
+	return &stream[T]{
+		elements: append(s.elements, items...),
+	}
+}
+
 // Concat creates a new stream with all the elements of this stream followed by all the elements of the added stream
 func (s *stream[T]) Concat(add Stream[T]) Stream[T] {
 	r := &stream[T]{
@@ -164,6 +192,8 @@ func (s *stream[T]) Concat(add Stream[T]) Stream[T] {
 		r.elements = append(r.elements, as.elements...)
 	} else if sas, ok := add.(Streamable[T]); ok {
 		r.elements = append(r.elements, sas...)
+	} else if ssl, ok := add.(*streamableSlice[T]); ok {
+		r.elements = append(r.elements, *ssl.elements...)
 	} else {
 		_ = add.ForEach(NewConsumer(func(v T) error {
 			r.elements = append(r.elements, v)
@@ -304,7 +334,7 @@ func (s *stream[T]) Len() int {
 //
 // if the maximum size is greater than the length of this stream, all elements are returned
 func (s *stream[T]) Limit(maxSize int) Stream[T] {
-	max := maxSize
+	max := absZero(maxSize)
 	if l := len(s.elements); l < max {
 		max = l
 	}
@@ -367,11 +397,19 @@ func (s *stream[T]) NoneMatch(p Predicate[T]) bool {
 //
 // if no elements match in the specified position, an empty (not present) optional is returned
 func (s *stream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
+	absn := absInt(nth)
+	if absn > len(s.elements) {
+		return gopt.Empty[T]()
+	}
 	c := 0
-	if nth < 0 {
-		nth = 0 - nth
+	if p == nil && nth < 0 {
+		return gopt.Of[T](s.elements[len(s.elements)-absn])
+	} else if p == nil && nth > 0 {
+		return gopt.Of[T](s.elements[nth-1])
+	} else if nth < 0 {
+		nth = absn
 		for i := len(s.elements) - 1; i >= 0; i-- {
-			if p == nil || p.Test(s.elements[i]) {
+			if p.Test(s.elements[i]) {
 				c++
 				if c == nth {
 					return gopt.Of[T](s.elements[i])
@@ -380,7 +418,7 @@ func (s *stream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
 		}
 	} else if nth > 0 {
 		for _, v := range s.elements {
-			if p == nil || p.Test(v) {
+			if p.Test(v) {
 				c++
 				if c == nth {
 					return gopt.Of[T](v)
@@ -391,17 +429,52 @@ func (s *stream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
 	return gopt.Empty[T]()
 }
 
+// Reverse creates a new stream composed of elements from this stream but in reverse order
+func (s *stream[T]) Reverse() Stream[T] {
+	l := len(s.elements)
+	r := &stream[T]{
+		elements: make([]T, l),
+	}
+	for i := 0; i < l; i++ {
+		r.elements[i] = s.elements[l-i-1]
+	}
+	return r
+}
+
 // Skip creates a new stream consisting of this stream after discarding the first n elements
 //
 // if the specified n to skip is equal to or greater than the number of elements in this stream,
 // an empty stream is returned
 func (s *stream[T]) Skip(n int) Stream[T] {
-	skip := n
+	skip := absZero(n)
 	if l := len(s.elements); skip >= l {
 		skip = l
 	}
 	return &stream[T]{
 		elements: s.elements[skip:],
+	}
+}
+
+// Slice creates a new stream composed of elements from this stream starting at the specified start and including
+// the specified count (or to the end)
+//
+// the start is zero based (and less than zero is ignored)
+//
+// if the specified count is negative, items are selected from the start and then backwards by the count
+func (s *stream[T]) Slice(start int, count int) Stream[T] {
+	start = absZero(start)
+	end := start + count
+	if count < 0 {
+		start, end = end, start
+	}
+	if start < 0 {
+		start = 0
+	}
+	if end > len(s.elements) {
+		end = len(s.elements)
+	}
+	return &stream[T]{
+		elements: s.elements[start:end],
 	}
 }
 
@@ -459,29 +532,18 @@ func (s *stream[T]) Unique(c Comparator[T]) Stream[T] {
 	if isDistinctable(vt) {
 		return s.Distinct()
 	} else if c != nil {
-		prevs := make(map[int]bool, len(s.elements))
+		pres := make([]bool, len(s.elements))
 		for i, v := range s.elements {
-			if !prevs[i] {
+			if !pres[i] {
 				for j := i + 1; j < len(s.elements); j++ {
-					if !prevs[j] && c.Compare(v, s.elements[j]) == 0 {
-						prevs[j] = true
+					if !pres[j] && c.Compare(v, s.elements[j]) == 0 {
+						pres[j] = true
 					}
 				}
-				prevs[i] = true
+				pres[i] = true
 				r.elements = append(r.elements, v)
 			}
 		}
 	}
 	return r
-}
-
-func isDistinctable(v any) bool {
-	switch v.(type) {
-	case string, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, bool, float32, float64:
-		return true
-	}
-	if reflect.TypeOf(v).Kind() != reflect.Ptr {
-		return true
-	}
-	return false
 }
