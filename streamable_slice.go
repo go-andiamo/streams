@@ -392,19 +392,14 @@ func (s *streamableSlice[T]) Union(other Stream[T], c Comparator[T]) Stream[T] {
 
 // Unique creates a new stream of unique elements in this stream
 //
-// if the value type of elements in this stream are directly mappable (i.e. primitive or non-pointer types) then
-// Unique ignores the provided comparator and uses Distinct as the result.
-//
 // uniqueness is determined using the provided comparator
 //
-// if the value type of elements in this stream are not directly mappable and the provided comparator is nil,
-// then an empty set is returned
+// if provided comparator is nil but the value type of elements in this stream are directly mappable (i.e. primitive or non-pointer types) then
+// Distinct is used as the result, otherwise returns an empty stream
 func (s *streamableSlice[T]) Unique(c Comparator[T]) Stream[T] {
 	r := &stream[T]{}
 	var vt T
-	if isDistinctable(vt) {
-		return s.Distinct()
-	} else if c != nil {
+	if c != nil {
 		pres := make([]bool, len(*s.elements))
 		for i, v := range *s.elements {
 			if !pres[i] {
@@ -417,6 +412,8 @@ func (s *streamableSlice[T]) Unique(c Comparator[T]) Stream[T] {
 				r.elements = append(r.elements, v)
 			}
 		}
+	} else if isDistinctable(vt) {
+		return s.Distinct()
 	}
 	return r
 }

@@ -22,6 +22,7 @@ func TestOfSlice(t *testing.T) {
 	require.Equal(t, 4, s.Len())
 	sl = append(sl, "e")
 	require.Equal(t, 4, s.Len())
+	require.Equal(t, 5, len(sl))
 }
 
 func TestStream_AllMatch(t *testing.T) {
@@ -473,6 +474,10 @@ func TestStream_Unique(t *testing.T) {
 	s = s.Unique(StringComparator)
 	require.Equal(t, 3, s.Len())
 
+	s = Of("a", "a", "b", "c", "c")
+	s = s.Unique(nil)
+	require.Equal(t, 3, s.Len())
+
 	s2 := Of(instruct{1}, instruct{1}, instruct{2}, instruct{3}, instruct{3})
 	require.Equal(t, 3, s2.Distinct().Len())
 	require.Equal(t, 3, s2.Unique(nil).Len())
@@ -488,4 +493,6 @@ func TestStream_Unique(t *testing.T) {
 		return 0
 	}))
 	require.Equal(t, 3, s3.Len())
+	s3 = s3.Unique(nil)
+	require.Equal(t, 0, s3.Len())
 }
