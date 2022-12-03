@@ -15,11 +15,15 @@ type Predicate[T any] interface {
 	Negate() Predicate[T]
 }
 
-// PredicateFunc is the function signature used to create a new Predicate
-type PredicateFunc[T any] func(v T) bool
-
 // NewPredicate creates a new Predicate from the function provided
 func NewPredicate[T any](f PredicateFunc[T]) Predicate[T] {
+	if f == nil {
+		return predicate[T]{
+			f: func(v T) bool {
+				return true
+			},
+		}
+	}
 	return predicate[T]{
 		f: f,
 	}
@@ -75,4 +79,23 @@ func (p predicate[T]) Negate() Predicate[T] {
 		inner:   p,
 		negated: true,
 	}
+}
+
+// PredicateFunc is the function signature used to create a new Predicate
+type PredicateFunc[T any] func(v T) bool
+
+func (f PredicateFunc[T]) Test(v T) bool {
+	return f(v)
+}
+
+func (f PredicateFunc[T]) And(other Predicate[T]) Predicate[T] {
+	return NewPredicate(f).And(other)
+}
+
+func (f PredicateFunc[T]) Or(other Predicate[T]) Predicate[T] {
+	return NewPredicate(f).Or(other)
+}
+
+func (f PredicateFunc[T]) Negate() Predicate[T] {
+	return NewPredicate(f).Negate()
 }

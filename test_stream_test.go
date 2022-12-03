@@ -140,6 +140,35 @@ func (s *testStream[T]) Intersection(other Stream[T], c Comparator[T]) Stream[T]
 	return s.Filter(p)
 }
 
+func (s *testStream[T]) Iterator(ps ...Predicate[T]) func() (T, bool) {
+	curr := 0
+	if p := joinPredicates[T](ps...); p != nil {
+		return func() (T, bool) {
+			var r T
+			ok := false
+			for i := curr; i < len(s.elements); i++ {
+				if p.Test(s.elements[i]) {
+					ok = true
+					r = s.elements[i]
+					curr = i + 1
+					break
+				}
+			}
+			return r, ok
+		}
+	} else {
+		return func() (T, bool) {
+			var r T
+			ok := false
+			if curr < len(s.elements) {
+				r, ok = s.elements[curr], true
+				curr++
+			}
+			return r, ok
+		}
+	}
+}
+
 func (s *testStream[T]) LastMatch(p Predicate[T]) gopt.Optional[T] {
 	for i := len(s.elements) - 1; i >= 0; i-- {
 		if p == nil || p.Test(s.elements[i]) {
@@ -187,6 +216,22 @@ func (s *testStream[T]) Min(c Comparator[T]) gopt.Optional[T] {
 		return gopt.Of(r)
 	}
 	return gopt.Empty[T]()
+}
+
+func (s *testStream[T]) MinMax(c Comparator[T]) (gopt.Optional[T], gopt.Optional[T]) {
+	if l := len(s.elements); l > 0 && c != nil {
+		mn := s.elements[0]
+		mx := mn
+		for i := 1; i < l; i++ {
+			if c.Compare(s.elements[i], mn) < 0 {
+				mn = s.elements[i]
+			} else if c.Compare(s.elements[i], mx) > 0 {
+				mx = s.elements[i]
+			}
+		}
+		return gopt.Of(mn), gopt.Of(mx)
+	}
+	return gopt.Empty[T](), gopt.Empty[T]()
 }
 
 func (s *testStream[T]) NoneMatch(p Predicate[T]) bool {

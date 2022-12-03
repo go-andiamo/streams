@@ -25,7 +25,7 @@ type Stream[T any] interface {
 	Count(p Predicate[T]) int
 	// Difference creates a new stream that is the set difference between this and the supplied other stream
 	//
-	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 	Difference(other Stream[T], c Comparator[T]) Stream[T]
 	// Distinct creates a new stream of distinct elements in this stream
 	Distinct() Stream[T]
@@ -53,8 +53,19 @@ type Stream[T any] interface {
 	Has(v T, c Comparator[T]) bool
 	// Intersection creates a new stream that is the set intersection of this and the supplied other stream
 	//
-	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 	Intersection(other Stream[T], c Comparator[T]) Stream[T]
+	// Iterator returns an iterator (pull) function
+	//
+	// the iterator function can be used in for loops, for example
+	//  next := strm.Iterator()
+	//  for v, ok := next(); ok; v, ok = next() {
+	//      fmt.Println(v)
+	//  }
+	//
+	// Iterator can also optionally accept varargs of Predicate - which, if specified, are logically OR-ed on each pull to ensure
+	// that pulled elements match
+	Iterator(ps ...Predicate[T]) func() (T, bool)
 	// LastMatch returns an optional of the last element that matches the provided predicate
 	//
 	// if no elements match the provided predicate, an empty (not present) optional is returned
@@ -75,6 +86,10 @@ type Stream[T any] interface {
 	//
 	// if the provided comparator is nil or the stream is empty, an empty (not present) optional is returned
 	Min(c Comparator[T]) gopt.Optional[T]
+	// MinMax returns the minimum and maximum element of this stream according to the provided comparator
+	//
+	// if the provided comparator is nil or the stream is empty, an empty (not present) optional is returned for both
+	MinMax(c Comparator[T]) (gopt.Optional[T], gopt.Optional[T])
 	// NoneMatch returns whether none of the elements of this stream match the provided predicate
 	//
 	// if the provided predicate is nil or the stream is empty, always returns true
@@ -107,11 +122,11 @@ type Stream[T any] interface {
 	Sorted(c Comparator[T]) Stream[T]
 	// SymmetricDifference creates a new stream that is the set symmetric difference between this and the supplied other stream
 	//
-	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 	SymmetricDifference(other Stream[T], c Comparator[T]) Stream[T]
 	// Union creates a new stream that is the set union of this and the supplied other stream
 	//
-	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+	// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 	Union(other Stream[T], c Comparator[T]) Stream[T]
 	// Unique creates a new stream of unique elements in this stream
 	//
@@ -218,8 +233,11 @@ func (s *stream[T]) Count(p Predicate[T]) int {
 
 // Difference creates a new stream that is the set difference between this and the supplied other stream
 //
-// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 func (s *stream[T]) Difference(other Stream[T], c Comparator[T]) Stream[T] {
+	if c == nil {
+		return &stream[T]{}
+	}
 	p := NewPredicate[T](func(v T) bool {
 		return !other.Has(v, c)
 	})
@@ -300,12 +318,54 @@ func (s *stream[T]) Has(v T, c Comparator[T]) bool {
 
 // Intersection creates a new stream that is the set intersection of this and the supplied other stream
 //
-// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 func (s *stream[T]) Intersection(other Stream[T], c Comparator[T]) Stream[T] {
+	if c == nil {
+		return &stream[T]{}
+	}
 	p := NewPredicate[T](func(v T) bool {
 		return other.Has(v, c)
 	})
 	return s.Filter(p)
+}
+
+// Iterator returns an iterator (pull) function
+//
+// the iterator function can be used in for loops, for example
+//  next := strm.Iterator()
+//  for v, ok := next(); ok; v, ok = next() {
+//      fmt.Println(v)
+//  }
+//
+// Iterator can also optionally accept varargs of Predicate - which, if specified, are logically OR-ed on each pull to ensure
+// that pulled elements match
+func (s *stream[T]) Iterator(ps ...Predicate[T]) func() (T, bool) {
+	curr := 0
+	if p := joinPredicates[T](ps...); p != nil {
+		return func() (T, bool) {
+			var r T
+			ok := false
+			for i := curr; i < len(s.elements); i++ {
+				if p.Test(s.elements[i]) {
+					ok = true
+					r = s.elements[i]
+					curr = i + 1
+					break
+				}
+			}
+			return r, ok
+		}
+	} else {
+		return func() (T, bool) {
+			var r T
+			ok := false
+			if curr < len(s.elements) {
+				r, ok = s.elements[curr], true
+				curr++
+			}
+			return r, ok
+		}
+	}
 }
 
 // LastMatch returns an optional of the last element that matches the provided predicate
@@ -370,6 +430,25 @@ func (s *stream[T]) Min(c Comparator[T]) gopt.Optional[T] {
 		return gopt.Of(r)
 	}
 	return gopt.Empty[T]()
+}
+
+// MinMax returns the minimum and maximum element of this stream according to the provided comparator
+//
+// if the provided comparator is nil or the stream is empty, an empty (not present) optional is returned for both
+func (s *stream[T]) MinMax(c Comparator[T]) (gopt.Optional[T], gopt.Optional[T]) {
+	if l := len(s.elements); l > 0 && c != nil {
+		mn := s.elements[0]
+		mx := mn
+		for i := 1; i < l; i++ {
+			if c.Compare(s.elements[i], mn) < 0 {
+				mn = s.elements[i]
+			} else if c.Compare(s.elements[i], mx) > 0 {
+				mx = s.elements[i]
+			}
+		}
+		return gopt.Of(mn), gopt.Of(mx)
+	}
+	return gopt.Empty[T](), gopt.Empty[T]()
 }
 
 // NoneMatch returns whether none of the elements of this stream match the provided predicate
@@ -494,8 +573,11 @@ func (s *stream[T]) Sorted(c Comparator[T]) Stream[T] {
 
 // SymmetricDifference creates a new stream that is the set symmetric difference between this and the supplied other stream
 //
-// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 func (s *stream[T]) SymmetricDifference(other Stream[T], c Comparator[T]) Stream[T] {
+	if c == nil {
+		return &stream[T]{}
+	}
 	i := s.Intersection(other, c)
 	p := NewPredicate[T](func(v T) bool {
 		return !i.Has(v, c)
@@ -505,8 +587,11 @@ func (s *stream[T]) SymmetricDifference(other Stream[T], c Comparator[T]) Stream
 
 // Union creates a new stream that is the set union of this and the supplied other stream
 //
-// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is unpredictable)
+// equality of elements is determined using the provided comparator (if the provided comparator is nil, the result is always empty)
 func (s *stream[T]) Union(other Stream[T], c Comparator[T]) Stream[T] {
+	if c == nil {
+		return &stream[T]{}
+	}
 	i := s.Intersection(other, c)
 	p := NewPredicate[T](func(v T) bool {
 		return !i.Has(v, c)

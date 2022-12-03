@@ -10,6 +10,12 @@ type outStruct struct {
 	value string
 }
 
+func TestNewMapperPanics(t *testing.T) {
+	require.Panics(t, func() {
+		NewMapper[string, string](nil)
+	})
+}
+
 func TestMapper_Map(t *testing.T) {
 	s := Of("D", "j", "F", "g", "H", "i", "E", "a", "B", "c")
 	c := NewConverter[string, outStruct](func(v string) (outStruct, error) {

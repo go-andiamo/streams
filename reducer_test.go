@@ -9,6 +9,12 @@ type instruct struct {
 	value int
 }
 
+func TestNewReducerPanics(t *testing.T) {
+	require.Panics(t, func() {
+		NewReducer[string, string](nil)
+	})
+}
+
 func TestReducer(t *testing.T) {
 	a := NewAccumulator[instruct, int](func(t instruct, r int) int {
 		return r + t.value
