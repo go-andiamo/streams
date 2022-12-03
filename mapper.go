@@ -7,7 +7,12 @@ type Mapper[T any, R any] interface {
 }
 
 // NewMapper creates a new Mapper that will use the provided Converter
+//
+// NewMapper panics if a nil Converter is supplied
 func NewMapper[T any, R any](c Converter[T, R]) Mapper[T, R] {
+	if c == nil {
+		panic("converter cannot be nil")
+	}
 	return mapper[T, R]{
 		c: c,
 	}

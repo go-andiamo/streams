@@ -151,3 +151,55 @@ func isDistinctable(v any) bool {
 	}
 	return false
 }
+
+func joinPredicates[T any](ps ...Predicate[T]) Predicate[T] {
+	var first Predicate[T]
+	for _, p := range ps {
+		if p != nil {
+			if first == nil {
+				first = p
+			} else {
+				first = first.Or(p)
+			}
+		}
+	}
+	return first
+}
+
+// SliceIterator is a utility function that returns an iterator (pull) function on the specified slice
+// the iterator function can be used in for loops, for example
+//  next := SliceIterator([]string{"a", "b", "c", "d"})
+//  for v, ok := next(); ok; v, ok = next() {
+//      fmt.Println(v)
+//  }
+//
+// SliceIterator can also optionally accept varargs of Predicate - which, if specified, are logically OR-ed on each pull to ensure
+// that pulled elements match
+func SliceIterator[T any](s []T, ps ...Predicate[T]) func() (T, bool) {
+	curr := 0
+	if p := joinPredicates[T](ps...); p != nil {
+		return func() (T, bool) {
+			var r T
+			ok := false
+			for i := curr; i < len(s); i++ {
+				if p.Test(s[i]) {
+					ok = true
+					r = s[i]
+					curr = i + 1
+					break
+				}
+			}
+			return r, ok
+		}
+	} else {
+		return func() (T, bool) {
+			var r T
+			ok := false
+			if curr < len(s) {
+				r, ok = s[curr], true
+				curr++
+			}
+			return r, ok
+		}
+	}
+}

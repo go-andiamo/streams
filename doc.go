@@ -1,5 +1,5 @@
 // Package streams - Go package implementation of streams
 /*
-A very simple Stream implementation in Golang
+A very lightweight streams implementation in Golang - a functional style for handling of slices
 */
 package streams

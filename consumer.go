@@ -10,11 +10,11 @@ type Consumer[T any] interface {
 	AndThen(after Consumer[T]) Consumer[T]
 }
 
-// ConsumerFunc is the function signature used to create a new Consumer
-type ConsumerFunc[T any] func(v T) error
-
 // NewConsumer creates a new consumer from the function provided
 func NewConsumer[T any](f ConsumerFunc[T]) Consumer[T] {
+	if f == nil {
+		return nil
+	}
 	return consumer[T]{
 		f: f,
 	}
@@ -47,4 +47,15 @@ func (c consumer[T]) AndThen(after Consumer[T]) Consumer[T] {
 		inner:   c,
 		andThen: after,
 	}
+}
+
+// ConsumerFunc is the function signature used to create a new Consumer
+type ConsumerFunc[T any] func(v T) error
+
+func (f ConsumerFunc[T]) Accept(v T) error {
+	return f(v)
+}
+
+func (f ConsumerFunc[T]) AndThen(after Consumer[T]) Consumer[T] {
+	return NewConsumer[T](f).AndThen(after)
 }

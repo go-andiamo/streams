@@ -35,19 +35,11 @@ type Comparator[T any] interface {
 	Then(other Comparator[T]) Comparator[T]
 }
 
-// ComparatorFunc is the function signature used to create a new Comparator
-//
-// the function should compare the two values provided lexicographically, i.e.:
-//
-// * the result should be 0 if v1 == v2
-//
-// * the result should be -1 if v1 < v2
-//
-// * the result should be 1 if v1 > v2
-type ComparatorFunc[T any] func(v1, v2 T) int
-
 // NewComparator creates a new Comparator from the function provided
 func NewComparator[T any](f ComparatorFunc[T]) Comparator[T] {
+	if f == nil {
+		return nil
+	}
 	return comparator[T]{
 		f: f,
 	}
@@ -126,7 +118,7 @@ func (c comparator[T]) NotEqual(v1, v2 T) bool {
 // the reversal is against less/greater as well as against equality/non-equality
 func (c comparator[T]) Reversed() Comparator[T] {
 	return comparator[T]{
-		f:        c.f,
+		inner:    c,
 		reversed: !c.reversed,
 	}
 }
@@ -138,4 +130,51 @@ func (c comparator[T]) Then(other Comparator[T]) Comparator[T] {
 		inner: c,
 		then:  other,
 	}
+}
+
+// ComparatorFunc is the function signature used to create a new Comparator
+//
+// the function should compare the two values provided lexicographically, i.e.:
+//
+// * the result should be 0 if v1 == v2
+//
+// * the result should be -1 if v1 < v2
+//
+// * the result should be 1 if v1 > v2
+type ComparatorFunc[T any] func(v1, v2 T) int
+
+func (f ComparatorFunc[T]) Compare(v1, v2 T) int {
+	return f(v1, v2)
+}
+
+func (f ComparatorFunc[T]) Less(v1, v2 T) bool {
+	return f(v1, v2) < 0
+}
+
+func (f ComparatorFunc[T]) LessOrEqual(v1, v2 T) bool {
+	return f(v1, v2) <= 0
+}
+
+func (f ComparatorFunc[T]) Greater(v1, v2 T) bool {
+	return f(v1, v2) > 0
+}
+
+func (f ComparatorFunc[T]) GreaterOrEqual(v1, v2 T) bool {
+	return f(v1, v2) >= 0
+}
+
+func (f ComparatorFunc[T]) Equal(v1, v2 T) bool {
+	return f(v1, v2) == 0
+}
+
+func (f ComparatorFunc[T]) NotEqual(v1, v2 T) bool {
+	return f(v1, v2) != 0
+}
+
+func (f ComparatorFunc[T]) Reversed() Comparator[T] {
+	return NewComparator[T](f).Reversed()
+}
+
+func (f ComparatorFunc[T]) Then(other Comparator[T]) Comparator[T] {
+	return NewComparator[T](f).Then(other)
 }

@@ -108,6 +108,9 @@ func TestStreamableSlice_Difference(t *testing.T) {
 	v, ok = o.GetOk()
 	require.True(t, ok)
 	require.Equal(t, "d", v)
+
+	s3 := s1.Difference(s2, nil)
+	require.Equal(t, 0, s3.Len())
 }
 
 func TestStreamableSlice_Distinct(t *testing.T) {
@@ -199,6 +202,36 @@ func TestStreamableSlice_Intersection(t *testing.T) {
 	v, ok = o.GetOk()
 	require.True(t, ok)
 	require.Equal(t, "c", v)
+
+	s3 := s1.Intersection(s2, nil)
+	require.Equal(t, 0, s3.Len())
+}
+
+func TestStreamableSlice_Iterator(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"a", "a", "b", "c", "c"})
+	count := 0
+	str := ""
+	iter := s.Iterator()
+	for v, ok := iter(); ok; v, ok = iter() {
+		count++
+		str = str + v
+	}
+	require.Equal(t, 5, count)
+	require.Equal(t, "aabcc", str)
+
+	count = 0
+	str = ""
+	iter = s.Iterator(NewPredicate(func(v string) bool {
+		return v == "a"
+	}), NewPredicate(func(v string) bool {
+		return v == "b"
+	}))
+	for v, ok := iter(); ok; v, ok = iter() {
+		count++
+		str = str + v
+	}
+	require.Equal(t, 3, count)
+	require.Equal(t, "aab", str)
 }
 
 func TestStreamableSlice_LastMatch(t *testing.T) {
@@ -264,6 +297,29 @@ func TestStreamableSlice_Min(t *testing.T) {
 	s = NewStreamableSlice(&[]string{})
 	o = s.Min(c)
 	require.False(t, o.IsPresent())
+}
+
+func TestStreamableSlice_MinMax(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"d", "j", "f", "g", "h", "i", "e", "a", "b", "c"})
+	c := NewComparator(func(v1, v2 string) int {
+		return strings.Compare(v1, v2)
+	})
+	mn, mx := s.MinMax(c)
+	require.True(t, mn.IsPresent())
+	v, _ := mn.GetOk()
+	require.Equal(t, "a", v)
+	require.True(t, mx.IsPresent())
+	v, _ = mx.GetOk()
+	require.Equal(t, "j", v)
+
+	mn, mx = s.MinMax(nil)
+	require.False(t, mn.IsPresent())
+	require.False(t, mx.IsPresent())
+
+	s = NewStreamableSlice(&[]string{})
+	mn, mx = s.MinMax(c)
+	require.False(t, mn.IsPresent())
+	require.False(t, mx.IsPresent())
 }
 
 func TestStreamableSlice_NoneMatch(t *testing.T) {
@@ -433,6 +489,9 @@ func TestStreamableSlice_SymmetricDifference(t *testing.T) {
 	v, ok = o.GetOk()
 	require.True(t, ok)
 	require.Equal(t, "a", v)
+
+	s3 := s1.SymmetricDifference(s2, nil)
+	require.Equal(t, 0, s3.Len())
 }
 
 func TestStreamableSlice_Union(t *testing.T) {
@@ -456,6 +515,9 @@ func TestStreamableSlice_Union(t *testing.T) {
 	v, ok = o.GetOk()
 	require.True(t, ok)
 	require.Equal(t, "d", v)
+
+	s3 := s1.Union(s2, nil)
+	require.Equal(t, 0, s3.Len())
 }
 
 func TestStreamableSlice_Unique(t *testing.T) {

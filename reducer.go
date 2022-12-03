@@ -7,7 +7,12 @@ type Reducer[T any, R any] interface {
 }
 
 // NewReducer creates a new Reducer that will use the supplied Accumulator
+//
+// NewReducer panics if a nil Accumulator is supplied
 func NewReducer[T any, R any](accumulator Accumulator[T, R]) Reducer[T, R] {
+	if accumulator == nil {
+		panic("accumulator cannot be nil")
+	}
 	return &reducer[T, R]{
 		accumulator: accumulator,
 	}
