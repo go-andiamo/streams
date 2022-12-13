@@ -4,6 +4,10 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-andiamo/gopt v1.3.1 h1:52qe32MMoJnjEIfMtozwo6qLSkXxXWO+QG+Z5hlxJfo=
 github.com/go-andiamo/gopt v1.3.1/go.mod h1:jBDKwaf2c/xc7wy5pqnqjFGZE2tz6jagoczq/Hj8eFg=
+github.com/go-andiamo/gopt v1.4.0 h1:V/na3v49fg2loCPdMORUPnuKTi6Hm568nvXGbAXrXvU=
+github.com/go-andiamo/gopt v1.4.0/go.mod h1:jBDKwaf2c/xc7wy5pqnqjFGZE2tz6jagoczq/Hj8eFg=
+github.com/go-andiamo/gopt v1.5.0 h1:nqjPAMDmKNwFhs9IZXQPhRfh/TYeuIKmC2chs/CQmCc=
+github.com/go-andiamo/gopt v1.5.0/go.mod h1:jBDKwaf2c/xc7wy5pqnqjFGZE2tz6jagoczq/Hj8eFg=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=

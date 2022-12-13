@@ -102,7 +102,7 @@ func (s *testStream[T]) Filter(p Predicate[T]) Stream[T] {
 	return r
 }
 
-func (s *testStream[T]) FirstMatch(p Predicate[T]) gopt.Optional[T] {
+func (s *testStream[T]) FirstMatch(p Predicate[T]) *gopt.Optional[T] {
 	for _, v := range s.elements {
 		if p == nil || p.Test(v) {
 			return gopt.Of[T](v)
@@ -169,7 +169,7 @@ func (s *testStream[T]) Iterator(ps ...Predicate[T]) func() (T, bool) {
 	}
 }
 
-func (s *testStream[T]) LastMatch(p Predicate[T]) gopt.Optional[T] {
+func (s *testStream[T]) LastMatch(p Predicate[T]) *gopt.Optional[T] {
 	for i := len(s.elements) - 1; i >= 0; i-- {
 		if p == nil || p.Test(s.elements[i]) {
 			return gopt.Of[T](s.elements[i])
@@ -192,7 +192,7 @@ func (s *testStream[T]) Limit(maxSize int) Stream[T] {
 	}
 }
 
-func (s *testStream[T]) Max(c Comparator[T]) gopt.Optional[T] {
+func (s *testStream[T]) Max(c Comparator[T]) *gopt.Optional[T] {
 	if l := len(s.elements); l > 0 && c != nil {
 		r := s.elements[0]
 		for i := 1; i < l; i++ {
@@ -205,7 +205,7 @@ func (s *testStream[T]) Max(c Comparator[T]) gopt.Optional[T] {
 	return gopt.Empty[T]()
 }
 
-func (s *testStream[T]) Min(c Comparator[T]) gopt.Optional[T] {
+func (s *testStream[T]) Min(c Comparator[T]) *gopt.Optional[T] {
 	if l := len(s.elements); l > 0 && c != nil {
 		r := s.elements[0]
 		for i := 1; i < l; i++ {
@@ -218,7 +218,7 @@ func (s *testStream[T]) Min(c Comparator[T]) gopt.Optional[T] {
 	return gopt.Empty[T]()
 }
 
-func (s *testStream[T]) MinMax(c Comparator[T]) (gopt.Optional[T], gopt.Optional[T]) {
+func (s *testStream[T]) MinMax(c Comparator[T]) (*gopt.Optional[T], *gopt.Optional[T]) {
 	if l := len(s.elements); l > 0 && c != nil {
 		mn := s.elements[0]
 		mx := mn
@@ -245,7 +245,7 @@ func (s *testStream[T]) NoneMatch(p Predicate[T]) bool {
 	return true
 }
 
-func (s *testStream[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
+func (s *testStream[T]) NthMatch(p Predicate[T], nth int) *gopt.Optional[T] {
 	absn := absInt(nth)
 	if absn > len(s.elements) {
 		return gopt.Empty[T]()

@@ -125,7 +125,7 @@ func (s Streamable[T]) Filter(p Predicate[T]) Stream[T] {
 // if no elements match the provided predicate, an empty (not present) optional is returned
 //
 // if the provided predicate is nil, the first element in this stream is returned
-func (s Streamable[T]) FirstMatch(p Predicate[T]) gopt.Optional[T] {
+func (s Streamable[T]) FirstMatch(p Predicate[T]) *gopt.Optional[T] {
 	for _, v := range s {
 		if p == nil || p.Test(v) {
 			return gopt.Of[T](v)
@@ -223,7 +223,7 @@ func (s Streamable[T]) Iterator(ps ...Predicate[T]) func() (T, bool) {
 // if no elements match the provided predicate, an empty (not present) optional is returned
 //
 // if the provided predicate is nil, the last element in this stream is returned
-func (s Streamable[T]) LastMatch(p Predicate[T]) gopt.Optional[T] {
+func (s Streamable[T]) LastMatch(p Predicate[T]) *gopt.Optional[T] {
 	for i := len(s) - 1; i >= 0; i-- {
 		if p == nil || p.Test(s[i]) {
 			return gopt.Of[T](s[i])
@@ -253,7 +253,7 @@ func (s Streamable[T]) Limit(maxSize int) Stream[T] {
 // Max returns the maximum element of this stream according to the provided comparator
 //
 // if the provided comparator is nil or the stream is empty, an empty (not present) optional is returned
-func (s Streamable[T]) Max(c Comparator[T]) gopt.Optional[T] {
+func (s Streamable[T]) Max(c Comparator[T]) *gopt.Optional[T] {
 	if l := len(s); l > 0 && c != nil {
 		r := s[0]
 		for i := 1; i < l; i++ {
@@ -269,7 +269,7 @@ func (s Streamable[T]) Max(c Comparator[T]) gopt.Optional[T] {
 // Min returns the minimum element of this stream according to the provided comparator
 //
 // if the provided comparator is nil or the stream is empty, an empty (not present) optional is returned
-func (s Streamable[T]) Min(c Comparator[T]) gopt.Optional[T] {
+func (s Streamable[T]) Min(c Comparator[T]) *gopt.Optional[T] {
 	if l := len(s); l > 0 && c != nil {
 		r := s[0]
 		for i := 1; i < l; i++ {
@@ -285,7 +285,7 @@ func (s Streamable[T]) Min(c Comparator[T]) gopt.Optional[T] {
 // MinMax returns the minimum and maximum element of this stream according to the provided comparator
 //
 // if the provided comparator is nil or the stream is empty, an empty (not present) optional is returned for both
-func (s Streamable[T]) MinMax(c Comparator[T]) (gopt.Optional[T], gopt.Optional[T]) {
+func (s Streamable[T]) MinMax(c Comparator[T]) (*gopt.Optional[T], *gopt.Optional[T]) {
 	if l := len(s); l > 0 && c != nil {
 		mn := s[0]
 		mx := mn
@@ -322,7 +322,7 @@ func (s Streamable[T]) NoneMatch(p Predicate[T]) bool {
 // if the provided predicate is nil, any element is taken as matching
 //
 // if no elements match in the specified position, an empty (not present) optional is returned
-func (s Streamable[T]) NthMatch(p Predicate[T], nth int) gopt.Optional[T] {
+func (s Streamable[T]) NthMatch(p Predicate[T], nth int) *gopt.Optional[T] {
 	absn := absInt(nth)
 	if absn > len(s) {
 		return gopt.Empty[T]()

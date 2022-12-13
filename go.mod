@@ -3,7 +3,7 @@ module github.com/go-andiamo/streams
 go 1.18
 
 require (
-	github.com/go-andiamo/gopt v1.3.1
+	github.com/go-andiamo/gopt v1.5.0
 	github.com/stretchr/testify v1.8.1
 )
 
