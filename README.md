@@ -136,7 +136,7 @@ To update Streams to the latest version, run:
                 </ul>
             </td>
             <td>
-                <code>Optional[T]</code>
+                <code>*Optional[T]</code>
             </td>
         </tr>
         <tr></tr>
@@ -210,7 +210,7 @@ for v, ok := next(); ok; v, ok = next() {
                 </ul>
             </td>
             <td>
-                <code>Optional[T]</code>
+                <code>*Optional[T]</code>
             </td>
         </tr>
         <tr></tr>
@@ -248,7 +248,7 @@ for v, ok := next(); ok; v, ok = next() {
                 </ul>
             </td>
             <td>
-                <code>Optional[T]</code>
+                <code>*Optional[T]</code>
             </td>
         </tr>
         <tr></tr>
@@ -261,7 +261,7 @@ for v, ok := next(); ok; v, ok = next() {
                 </ul>
             </td>
             <td>
-                <code>Optional[T]</code>
+                <code>*Optional[T]</code>
             </td>
         </tr>
         <tr></tr>
@@ -274,7 +274,7 @@ for v, ok := next(); ok; v, ok = next() {
                 </ul>
             </td>
             <td>
-                <code>(Optional[T], Optional[T])</code>
+                <code>(*Optional[T], *Optional[T])</code>
             </td>
         </tr>
         <tr></tr>
@@ -302,7 +302,7 @@ for v, ok := next(); ok; v, ok = next() {
                 </ul>
             </td>
             <td>
-                <code>Optional[T]</code>
+                <code>*Optional[T]</code>
             </td>
         </tr>
         <tr></tr>
