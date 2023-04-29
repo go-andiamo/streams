@@ -55,6 +55,12 @@ func TestStreamableSlice_Append(t *testing.T) {
 	require.Equal(t, 6, s2.Len())
 }
 
+func TestStreamableSlice_AsSlice(t *testing.T) {
+	s := NewStreamableSlice(&[]string{"a", "b", "c"})
+	sl := s.AsSlice()
+	require.Equal(t, 3, len(sl))
+}
+
 func TestStreamableSlice_Concat(t *testing.T) {
 	s := NewStreamableSlice(&[]string{"a", "b", "c"})
 

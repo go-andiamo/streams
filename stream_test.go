@@ -62,6 +62,12 @@ func TestStream_Append(t *testing.T) {
 	require.Equal(t, 6, s2.Len())
 }
 
+func TestStream_AsSlice(t *testing.T) {
+	s := Of("a", "b", "c")
+	sl := s.AsSlice()
+	require.Equal(t, 3, len(sl))
+}
+
 func TestStream_Concat(t *testing.T) {
 	s := Of("a", "b", "c")
 	add := Of("d", "e", "f")

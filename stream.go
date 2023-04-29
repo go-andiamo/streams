@@ -135,6 +135,8 @@ type Stream[T any] interface {
 	// if provided comparator is nil but the value type of elements in this stream are directly mappable (i.e. primitive or non-pointer types) then
 	// Distinct is used as the result, otherwise returns an empty stream
 	Unique(c Comparator[T]) Stream[T]
+	// AsSlice returns the underlying slice
+	AsSlice() []T
 }
 
 // Of creates a new stream of the values provided
@@ -192,6 +194,11 @@ func (s *stream[T]) Append(items ...T) Stream[T] {
 	return &stream[T]{
 		elements: append(s.elements, items...),
 	}
+}
+
+// AsSlice returns the underlying slice
+func (s *stream[T]) AsSlice() []T {
+	return s.elements
 }
 
 // Concat creates a new stream with all the elements of this stream followed by all the elements of the added stream
