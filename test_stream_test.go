@@ -367,3 +367,7 @@ func (s *testStream[T]) Unique(c Comparator[T]) Stream[T] {
 	}
 	return r
 }
+
+func (s *testStream[T]) AsSlice() []T {
+	return s.elements
+}

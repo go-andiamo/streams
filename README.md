@@ -65,6 +65,18 @@ To update Streams to the latest version, run:
         <tr></tr>
         <tr>
             <td>
+                <code>AsSlice()</code><br>
+                <ul>
+                    returns the underlying slice
+                </ul>
+            </td>
+            <td>
+                <code>[]T</code>
+            </td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td>
                 <code>Concat(add Stream[T])</code><br>
                 <ul>
                     creates a new stream with all the elements of this stream followed by all the elements of the added stream

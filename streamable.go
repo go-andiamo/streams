@@ -44,6 +44,11 @@ func (s Streamable[T]) Append(items ...T) Stream[T] {
 	}
 }
 
+// AsSlice returns the underlying slice
+func (s Streamable[T]) AsSlice() []T {
+	return s
+}
+
 // Concat creates a new stream with all the elements of this stream followed by all the elements of the added stream
 func (s Streamable[T]) Concat(add Stream[T]) Stream[T] {
 	r := &stream[T]{
